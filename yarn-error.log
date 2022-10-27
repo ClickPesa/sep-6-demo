@@ -1,0 +1,43 @@
+Arguments: 
+  /Users/omar/.nvm/versions/node/v14.17.1/bin/node /Users/omar/.yarn/bin/yarn.js add StellarSdk
+
+PATH: 
+  /Users/omar/.yarn/bin:/Users/omar/.config/yarn/global/node_modules/.bin:/Users/omar/bin:/Users/omar/.nvm/versions/node/v14.17.1/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Postgres.app/Contents/Versions/latest/bin:/Users/omar/.spicetify:/Users/omar/bin:/Users/omar/.nvm/versions/node/v14.17.1/bin
+
+Yarn version: 
+  1.22.19
+
+Node version: 
+  14.17.1
+
+Platform: 
+  darwin x64
+
+Trace: 
+  Error: https://registry.yarnpkg.com/StellarSdk: Not found
+      at Request.params.callback [as _callback] (/Users/omar/.yarn/lib/cli.js:66145:18)
+      at Request.self.callback (/Users/omar/.yarn/lib/cli.js:140890:22)
+      at Request.emit (events.js:375:28)
+      at Request.<anonymous> (/Users/omar/.yarn/lib/cli.js:141862:10)
+      at Request.emit (events.js:375:28)
+      at IncomingMessage.<anonymous> (/Users/omar/.yarn/lib/cli.js:141784:12)
+      at Object.onceWrapper (events.js:481:28)
+      at IncomingMessage.emit (events.js:387:35)
+      at endReadableNT (internal/streams/readable.js:1317:12)
+      at processTicksAndRejections (internal/process/task_queues.js:82:21)
+
+npm manifest: 
+  {
+    "name": "sep-se6-demo",
+    "version": "1.0.0",
+    "description": "Mykobo EURC SEP-6 demo",
+    "main": "index.js",
+    "author": "ClickPesa <tech@clickpesa.com>",
+    "license": "MIT"
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
