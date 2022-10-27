@@ -34,14 +34,12 @@ const createTrustline = async ({
   asset,
   issuerKey,
   networkPassphrase,
-  assetHoldingLimit,
   horizonURL,
 }: {
   keyPair: Keypair;
   asset: string;
   issuerKey: string;
   networkPassphrase: string;
-  assetHoldingLimit: string;
   horizonURL: string;
 }) => {
   const server = new StellarSdk.Server(horizonURL);
@@ -55,7 +53,6 @@ const createTrustline = async ({
     .addOperation(
       Operation.changeTrust({
         asset: newAsset,
-        limit: assetHoldingLimit,
       })
     )
     .setTimeout(30)

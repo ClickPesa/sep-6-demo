@@ -1,32 +1,40 @@
 "use strict";
 
-import { Transaction } from "stellar-sdk";
 require("dotenv").config();
 
+import { Transaction } from "stellar-sdk";
 import {
   activateAccount,
   createTrustline,
+  getAccountBalance,
   getRandomKeyPair,
 } from "./account/account-setup";
 import requestChallengeTransaction from "./auth/request-challenge-transaction";
 import signChallengeTransactionAccount from "./auth/sign-challenge-transaction";
 import submitSignedTransactionChallenge from "./auth/submit-signed-transaction";
-import retrieveKYCFieldsToBeCollected from "./kyc/retrieve-kyc-fields";
+import retrieveKYCFieldsToBeCollected from "./kyc/retrieve-required-fields";
 import getToml from "./shared/get-toml-details";
+import submitCollectedKYCFields from "./kyc/submit-collected-fields";
+import { sampleUser } from "./shared/sample-user-info";
+import { initiateDeposit } from "./deposit/initiate-sep6-deposit";
+import { retrieveDepositInfo } from "./deposit/retrieve-sep6-info";
+import { getTransactionStatusUntilComplete } from "./shared/get-transaction-status";
 
 const horizonURL = process.env.HORIZON_NETWORK as string;
 const networkPassphrase = process.env.STELLAR_NETWORK_PASSPHRASE as string;
-const assetHoldingLimit = "10000000";
-const anchorAsset = "TZS";
-const anchorIssuerAccount =
-  "GAH572DYUPXZDOKBI76H54WRKMIHDXZFLOFVFBDPKL3WIUTPGGHCQ5K7";
-const anchorDomain = "https://sandbox.connect.clickpesa.com";
+
+const anchorDomain = "https://dev.anchor.mykobo.co";
+const anchorAsset = "EURC";
 
 const main = async () => {
-  // GET ANCHOR INFO - SEP1
+  // GET ANCHOR DETAILS - SEP1
   const TOML = await getToml(anchorDomain);
   const anchorAuthEndpoint = TOML.WEB_AUTH_ENDPOINT as string;
   const anchorKYCEndpoint = TOML.KYC_SERVER as string;
+  const anchorIssuerAccount = TOML.CURRENCIES?.find(
+    (currency) => currency.code === anchorAsset
+  )?.issuer as string;
+  const anchorTransferServer = TOML.TRANSFER_SERVER as string;
 
   // ACCOUNT SETUP
   const accountKeyPair = getRandomKeyPair();
@@ -37,7 +45,6 @@ const main = async () => {
     issuerKey: anchorIssuerAccount,
     asset: anchorAsset,
     networkPassphrase,
-    assetHoldingLimit,
   });
 
   // AUTHENTICATION - SEP10
@@ -63,11 +70,48 @@ const main = async () => {
     kycServer: anchorKYCEndpoint,
     token: JWTToken,
   });
+
   console.log("fieldsToCollect :>> ", fieldsToCollect);
 
+  const successfulKYCDUser = await submitCollectedKYCFields({
+    publicKey: accountKeyPair.publicKey(),
+    kycServer: anchorKYCEndpoint,
+    token: JWTToken,
+    collectedFields: sampleUser,
+  });
+
+  console.log("successfulKYCDUser :>> ", successfulKYCDUser);
+
+  // DEPOSIT - SEP6
+  const { deposit } = await retrieveDepositInfo({
+    transferServerUrl: anchorTransferServer,
+    token: JWTToken,
+  });
+
+  console.log("deppositInformation :>> ", deposit);
+
+  const depositInstructions = await initiateDeposit({
+    amount: deposit[anchorAsset].min_amount,
+    assetCode: anchorAsset,
+    publicKey: accountKeyPair.publicKey(),
+    transferServerUrl: anchorTransferServer,
+    token: JWTToken,
+  });
+
+  console.log("depositInstructions :>> ", depositInstructions);
+
+  const { currentStatus } = await getTransactionStatusUntilComplete({
+    transactionId: depositInstructions.id,
+    token: JWTToken,
+    transferServerUrl: anchorTransferServer,
+    trustAssetCallback: () => Promise.resolve(""),
+  });
+
+  console.log("currentStatus :>> ", currentStatus);
+
   // ACCOUNT BALANCE
-  //const res = await getAccountBalance(accountKeyPair);
-  //console.log("result :>> ", res);
+  const res = await getAccountBalance(horizonURL, accountKeyPair);
+  console.log("result :>> ", res);
 };
 
 main();
