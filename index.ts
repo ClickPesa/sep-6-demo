@@ -23,8 +23,8 @@ import { getTransactionStatusUntilComplete } from "./shared/get-transaction-stat
 const horizonURL = process.env.HORIZON_NETWORK as string;
 const networkPassphrase = process.env.STELLAR_NETWORK_PASSPHRASE as string;
 
-const anchorDomain = "https://dev.anchor.mykobo.co";
-const anchorAsset = "EURC";
+const anchorDomain = "https://sandbox.connect.clickpesa.com";
+const anchorAsset = "TZS";
 
 const main = async () => {
   // GET ANCHOR DETAILS - SEP1
