@@ -1,4 +1,4 @@
-export const retrieveDepositInfo = async ({
+export const retrieveSEP6Info = async ({
   token,
   transferServerUrl,
 }: {

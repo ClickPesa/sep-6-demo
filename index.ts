@@ -17,8 +17,11 @@ import getToml from "./shared/get-toml-details";
 import submitCollectedKYCFields from "./kyc/submit-collected-fields";
 import { sampleUser } from "./shared/sample-user-info";
 import { initiateDeposit } from "./deposit/initiate-sep6-deposit";
-import { retrieveDepositInfo } from "./deposit/retrieve-sep6-info";
+import { retrieveSEP6Info } from "./deposit/retrieve-sep6-info";
 import { getTransactionStatusUntilComplete } from "./shared/get-transaction-status";
+import { initiateWithdraw } from "./withdraw/initiate-sep6-withdraw";
+import { sampleBankWithdrawDetails } from "./shared/sample-bank-withdraw-info";
+import { transferAssetToAnchor } from "./withdraw/initiate-asset-transfer";
 
 const horizonURL = process.env.HORIZON_NETWORK as string;
 const networkPassphrase = process.env.STELLAR_NETWORK_PASSPHRASE as string;
@@ -83,7 +86,7 @@ const main = async () => {
   console.log("successfulKYCDUser :>> ", successfulKYCDUser);
 
   // DEPOSIT - SEP6
-  const { deposit } = await retrieveDepositInfo({
+  const { deposit } = await retrieveSEP6Info({
     transferServerUrl: anchorTransferServer,
     token: JWTToken,
   });
@@ -100,7 +103,7 @@ const main = async () => {
 
   console.log("depositInstructions :>> ", depositInstructions);
 
-  const { currentStatus } = await getTransactionStatusUntilComplete({
+  const { currentStatus } = await getTransactionStatusUntilComplete({  // COMMENT THIS WHEN TESTING MYKOBO WITHDRAW
     transactionId: depositInstructions.id,
     token: JWTToken,
     transferServerUrl: anchorTransferServer,
@@ -112,6 +115,47 @@ const main = async () => {
   // ACCOUNT BALANCE
   const res = await getAccountBalance(horizonURL, accountKeyPair);
   console.log("result :>> ", res);
+
+  // WITHDRAW - SEP6
+  const { withdraw } = await retrieveSEP6Info({
+    transferServerUrl: anchorTransferServer,
+    token: JWTToken,
+  });
+
+  console.log("withdrawInfo :>> ", JSON.stringify(withdraw));
+
+  const withdrawInstructions = await initiateWithdraw({
+    amount: withdraw[anchorAsset].min_amount,
+    assetCode: anchorAsset,
+    publicKey: accountKeyPair.publicKey(),
+    transferServerUrl: anchorTransferServer,
+    token: JWTToken,
+    withdrawDetails: sampleBankWithdrawDetails,
+  });
+
+  console.log("withdrawInstructions :>> ", withdrawInstructions);
+
+  const {
+    memo_type,
+    memo,
+    account_id,
+    id: withdrawaTransactionId,
+  } = withdrawInstructions;
+  const { hash: withdrawHash } = await transferAssetToAnchor({
+    horizonURL,
+    keyPair: accountKeyPair,
+    issuerKey: anchorIssuerAccount,
+    asset: anchorAsset,
+    networkPassphrase,
+    anchorAccountId: account_id,
+    amount: withdraw[anchorAsset].min_amount.toString(),
+    memo_type,
+    memo,
+  });
+
+  console.log("withdrawHash :>> ", withdrawHash);
+  console.log('withdrawaTransactionId :>> ', withdrawaTransactionId);
+
 };
 
 main();
